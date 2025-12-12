@@ -1,6 +1,7 @@
 plugins {
     id("java")
     id("application")
+    id("com.gradleup.shadow") version "9.3.0"
 }
 
 group = "net.sylv"
@@ -35,6 +36,16 @@ dependencies {
     implementation("org.joml:joml:1.10.8")
 
     implementation("com.github.LeverClient:ElverAPI:afd3290")
+}
+
+tasks.shadowJar {
+    configurations = project.configurations.compileClasspath.map { listOf(it) }
+}
+
+tasks.jar {
+    manifest {
+        attributes.put("Main-Class", "net.sylv.Main")
+    }
 }
 
 tasks.test {
