@@ -1,11 +1,12 @@
 package net.sylv;
 
+import net.sylv.Util.Shaders.Uniform;
 import org.joml.Math;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 public class Camera {
-	public Vector3f position = new Vector3f(0, 0, -1);
+	public Vector3f position = new Vector3f(0, 0, -5);
 
 	public Vector3f rotation = new Vector3f(0, 0, 0);
 
@@ -13,7 +14,7 @@ public class Camera {
 
 	public Vector3f upVector = new Vector3f(0, 1, 0);
 
-	public float yaw = -90f;
+	public float yaw = -45f;
 
 	public float pitch = 0f;
 
@@ -54,7 +55,7 @@ public class Camera {
 	public Camera setFov(float fov, Window w) {
 		this.fov = fov;
 
-		updateProjectionMatrix(w);
+		updateProjectionMatrix(w, null);
 
 		return this;
 	}
@@ -66,9 +67,27 @@ public class Camera {
 			  .translate(position);
 	}
 
-	public Matrix4f updateProjectionMatrix(Window w) {
+	public Matrix4f updateProjectionMatrix(Window w, Uniform u) {
 		dirtyMatrix = true;
 
-		return matrix.identity().perspective(Math.toRadians(fov), (float) w.width/w.height, 0.1f, 100f);
+		matrix =  matrix.identity().perspective(Math.toRadians(fov), (float) w.width/w.height, 0.1f, 100f);
+
+		if (u != null) {
+			u.set(matrix, false);
+		}
+
+		return matrix;
+	}
+
+	public Matrix4f updateOrthoMatrix(Window w, Uniform u) {
+		dirtyMatrix = true;
+
+		matrix = matrix.identity().ortho(0, w.width, w.height, 0, -1f, 1f);
+
+		if (u != null) {
+			u.set(matrix, false);
+		}
+
+		return matrix;
 	}
 }

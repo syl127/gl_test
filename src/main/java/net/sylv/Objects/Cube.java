@@ -15,11 +15,9 @@ public class Cube extends Obj {
 	public Cube() {
 		Arrays.stream(getVertices()).forEach(vbo::addVertex);
 
-		vao = new VAO(() -> {
-			vbo.bind();
+		vao = new VAO(vbo, ebo, () -> {
 			vbo.upload(GL_STATIC_DRAW);
 
-			ebo.bind();
 			ebo.upload(getIndices(), GL_STATIC_DRAW);
 
 			glVertexAttribPointer(0, 3, GL_FLOAT, false, TexturedVertex.BYTES, 0);
@@ -71,11 +69,9 @@ public class Cube extends Obj {
 
 		Arrays.stream(getVertices()).forEach(vbo::addVertex);
 
-		vao = new VAO(() -> {
-			vbo.bind();
+		vao = new VAO(vbo, ebo, () -> {
 			vbo.upload(GL_STATIC_DRAW);
 
-			ebo.bind();
 			ebo.upload(getIndices(), GL_STATIC_DRAW);
 
 			glVertexAttribPointer(0, 3, GL_FLOAT, false, TexturedVertex.BYTES, 0);

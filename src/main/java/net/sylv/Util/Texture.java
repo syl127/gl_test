@@ -54,19 +54,21 @@ public class Texture {
 		setSampling();
 	}
 
-	public Texture(File f, int texture) {
+	public Texture(String f, int texture) {
 		defaultTexture = texture;
-
-		BufferedImage img;
-		try {
-			img = ImageIO.read(Texture.class.getResourceAsStream(f.getPath()));
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
 
 		id = glGenTextures();
 
-		setTexture(img);
+		if (f != null) {
+			BufferedImage img;
+			try {
+				img = ImageIO.read(Texture.class.getResourceAsStream("/" + f));
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+
+			setTexture(img);
+		}
 
 		setSampling();
 	}

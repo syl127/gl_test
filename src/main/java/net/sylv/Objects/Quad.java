@@ -11,15 +11,13 @@ import static org.lwjgl.opengl.GL15.GL_STATIC_DRAW;
 import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
 import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
 
-public class Plane extends Obj {
-	public Plane() {
+public class Quad extends Obj {
+	public Quad() {
 		Arrays.stream(getVertices()).forEach(vbo::addVertex);
 
-		vao = new VAO(() -> {
-			vbo.bind();
+		vao = new VAO(vbo, ebo, () -> {
 			vbo.upload(GL_STATIC_DRAW);
 
-			ebo.bind();
 			ebo.upload(getIndices(), GL_STATIC_DRAW);
 
 			glVertexAttribPointer(0, 3, GL_FLOAT, false, TexturedVertex.BYTES, 0);
@@ -32,7 +30,7 @@ public class Plane extends Obj {
 		});
 	}
 
-	public Plane(Plane c) {
+	public Quad(Quad c) {
 		this.setSize(c.size);
 		this.setPosition(c.position);
 		this.setRotation(c.rotation);
@@ -49,33 +47,11 @@ public class Plane extends Obj {
 		this.vBackStart = c.vBackStart;
 		this.vBackEnd = c.vBackEnd;
 
-		this.uLeftStart = c.uLeftStart;
-		this.uLeftEnd   = c.uLeftEnd;
-		this.vLeftStart = c.vLeftStart;
-		this.vLeftEnd = c.vLeftEnd;
-
-		this.uRightStart = c.uRightStart;
-		this.uRightEnd   = c.uRightEnd;
-		this.vRightStart = c.vRightStart;
-		this.vRightEnd = c.vRightEnd;
-
-		this.uTopStart = c.uTopStart;
-		this.uTopEnd   = c.uTopEnd;
-		this.vTopStart = c.vTopStart;
-		this.vTopEnd = c.vTopEnd;
-
-		this.uBottomStart = c.uBottomStart;
-		this.uBottomEnd   = c.uBottomEnd;
-		this.vBottomStart = c.vBottomStart;
-		this.vBottomEnd = c.vBottomEnd;
-
 		Arrays.stream(getVertices()).forEach(vbo::addVertex);
 
-		vao = new VAO(() -> {
-			vbo.bind();
+		vao = new VAO(vbo, ebo, () -> {
 			vbo.upload(GL_STATIC_DRAW);
 
-			ebo.bind();
 			ebo.upload(getIndices(), GL_STATIC_DRAW);
 
 			glVertexAttribPointer(0, 3, GL_FLOAT, false, TexturedVertex.BYTES, 0);
@@ -88,43 +64,43 @@ public class Plane extends Obj {
 		});
 	}
 
-	public Plane(float x, float y, float z) {
+	public Quad(float x, float y, float z) {
 		this();
 
 		this.position.set(x, y, z);
 	}
 
-	public Plane setPosition(float x, float y, float z) {
+	public Quad setPosition(float x, float y, float z) {
 		position.set(x, y, z);
 
 		return this;
 	}
 
-	public Plane setPosition(Vector3f vec) {
+	public Quad setPosition(Vector3f vec) {
 		position.set(vec);
 
 		return this;
 	}
 
-	public Plane setRotation(float x, float y, float z) {
+	public Quad setRotation(float x, float y, float z) {
 		rotation.set(x, y, z);
 
 		return this;
 	}
 
-	public Plane setRotation(Vector3f vec) {
+	public Quad setRotation(Vector3f vec) {
 		rotation.set(vec);
 
 		return this;
 	}
 
-	public Plane setSize(float x, float y, float z) {
+	public Quad setSize(float x, float y, float z) {
 		size.set(x, y, z);
 
 		return this;
 	}
 
-	public Plane setSize(Vector3f vec) {
+	public Quad setSize(Vector3f vec) {
 		size.set(vec);
 
 		return this;
@@ -150,7 +126,8 @@ public class Plane extends Obj {
 	@Override
 	public short[] getIndices() {
 		return new short[]{
-			  0, 1, 2,   2, 3, 0,
+			  0, 1, 2,
+			  2, 3, 0
 		};
 	}
 }

@@ -27,7 +27,7 @@ public class Mouse {
 		lastX = (float) w.width /2;
 		lastY = (float) w.height /2;
 
-		glfwSetInputMode(w.id, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		//glfwSetInputMode(w.id, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 		glfwSetWindowFocusCallback(w.id, (wid, focus) -> {
 			if (!focus) firstMouse = true;

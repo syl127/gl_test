@@ -25,8 +25,12 @@ public class VBO {
 		this.vertexSize = vertexSize;
 
 		//raw_vertices = new float[Math.max(vertices.length*vertexSize, 4)];
-		this.vertices = new ArrayList<>(vertices.length);
-		Collections.addAll(this.vertices, vertices);
+		if (vertices != null) {
+			this.vertices = new ArrayList<>(vertices.length);
+			Collections.addAll(this.vertices, vertices);
+		} else {
+			this.vertices = new ArrayList<>(0);
+		}
 
 		id = glGenBuffers();
 	}
@@ -75,6 +79,10 @@ public class VBO {
 
 	public void bind() {
 		glBindBuffer(GL_ARRAY_BUFFER, id);
+	}
+
+	public void unbind() {
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 
 	public void upload(@NativeType("GLenum") int usage) {

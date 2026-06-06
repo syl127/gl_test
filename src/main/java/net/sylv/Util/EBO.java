@@ -3,6 +3,7 @@ package net.sylv.Util;
 import net.sylv.Util.Vertex.Vertex;
 import org.lwjgl.system.NativeType;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,6 +17,8 @@ public class EBO {
 
 	public final HashMap<Vertex, Integer> indices = new HashMap<>();
 
+	public final ArrayList<Short> order = new ArrayList<>();
+
 	public short[] data;
 
 	public EBO(VBO vbo) {
@@ -27,6 +30,7 @@ public class EBO {
 
 	public void clear() {
 		indices.clear();
+		order.clear();
 	}
 
 	public int uploadVertex(Vertex v, Integer index) {
@@ -48,11 +52,26 @@ public class EBO {
 
 		//System.out.println("Added vertex: " + v + " at " + index);
 		indices.put(v, index);
+		order.add(index.shortValue());
 		return index;
+	}
+
+	public short[] getOrderedIndices() {
+		short[] n = new short[order.size()];
+		int i = 0;
+		for (short index : order) {
+			n[i++] = index;
+		}
+
+		return n;
 	}
 
 	public void bind() {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, id);
+	}
+
+	public void unbind() {
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 
 	// TODO: convert to buffer before upload? i doubt it'd actually be faster

@@ -24,10 +24,10 @@ public class Shader {
 		}
 	}
 
-	public static Shader fromFile(int type, File file) throws IOException {
-		try (InputStream stream = Shader.class.getResourceAsStream("/" + file.getPath())) {
+	public static Shader fromFile(int type, String file) throws IOException {
+		try (InputStream stream = Shader.class.getResourceAsStream("/" + file)) {
 			if (stream == null) {
-				throw new FileNotFoundException("Couldn't find file for shader source: " + file.getPath());
+				throw new FileNotFoundException("Couldn't find file for shader source: /" + file);
 			}
 
 			return new Shader(type, new String(stream.readAllBytes()));

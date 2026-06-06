@@ -1,5 +1,6 @@
 package net.sylv;
 
+import net.sylv.Util.FBO;
 import org.joml.Matrix4f;
 import org.lwjgl.glfw.GLFWCursorPosCallbackI;
 import org.lwjgl.glfw.GLFWErrorCallback;
@@ -20,6 +21,7 @@ import static org.lwjgl.glfw.GLFW.glfwSwapBuffers;
 import static org.lwjgl.glfw.GLFW.glfwSwapInterval;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT;
+import static org.lwjgl.opengl.GL13C.GL_MULTISAMPLE;
 import static org.lwjgl.system.MemoryUtil.NULL;
 
 public class Window {
@@ -30,6 +32,8 @@ public class Window {
 	public int height;
 
 	public Camera camera;
+
+	public FBO mainBuffer;
 
 	public Window(Camera camera) {
 		this.camera = camera;
@@ -43,8 +47,9 @@ public class Window {
 		}
 
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+		glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
 		//glfwWindowHint(GLFW_SAMPLES, 8);
-		// ^ breaks edges onn literally everything?
+		// ^ breaks edges onn literally everything? and doesn't work with transparent buffer?
 
 		id = glfwCreateWindow(width = 768, height = 512, "uwu meow", NULL, NULL);
 
@@ -66,6 +71,11 @@ public class Window {
 
 		GL.createCapabilities();
 
+		// create frame buffer for rendering
+		glEnable(GL_MULTISAMPLE);
+
+		mainBuffer = new FBO(width, height, 4,this); // mayber it's a driver problem, but 3 doesn't do bicubic correctly
+
 		// listen for resizing
 		glfwSetFramebufferSizeCallback(id, (id, w, h) -> {
 			width = w;
@@ -80,17 +90,24 @@ public class Window {
 
 	public void onResize(int w, int h) {
 		glViewport(0, 0, width = w, height = h);
-		camera.updateProjectionMatrix(this);
+		mainBuffer.resize(w, h);
+		camera.updateProjectionMatrix(this, null);
 	}
 
 	public void glRenderPre() {
-		glClearColor(0.2f, 0.2f, 0.22f, 1.0f);
+		//glClearColor(0.2f, 0.2f, 0.22f, 1.0f);
+		glClearColor(0f, 0f, 0f, 0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the framebuffer
+
+		mainBuffer.bind();
+
+		glClearColor(0f, 0f, 0f, 0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // clear the framebuffer
 	}
 
 	public void glRenderPost() {
-		glfwSwapBuffers(id); // swap the color buffers
-
 		glfwPollEvents();
+
+		glfwSwapBuffers(id); // swap the color buffers
 	}
 }

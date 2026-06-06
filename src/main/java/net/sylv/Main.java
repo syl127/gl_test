@@ -2,27 +2,25 @@ package net.sylv;
 
 import com.lcv.elverapi.apis.mojang.MojangSkinAPI;
 import net.sylv.Objects.Player;
+import net.sylv.Renderer.Renderer;
 import net.sylv.Util.*;
 import net.sylv.Objects.Cube;
 import net.sylv.Objects.Obj;
-import net.sylv.Objects.Plane;
+import net.sylv.Objects.Quad;
 import net.sylv.Util.Shaders.Shader;
 import net.sylv.Util.Shaders.ShaderProgram;
 import net.sylv.Util.Shaders.Uniform;
-import net.sylv.Util.Vertex.ColoredVertex;
-import net.sylv.Util.Vertex.TexturedVertex;
-import net.sylv.Util.Vertex.Vertex;
 import org.joml.Math;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import org.lwjgl.BufferUtils;
 
 import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Random;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
+import java.util.Arrays;
 import java.util.function.Consumer;
 
 import static org.lwjgl.glfw.GLFW.*;
@@ -36,110 +34,45 @@ public class Main {
 
 	public static ShaderProgram basicProgram;
 
+	public static ShaderProgram directProgram;
+
 	public static ArrayList<Consumer<Double>> tasks = new ArrayList<>(8);
 
-	public static void matrix(StringBuilder s, int size, Random r) {
-		for (int i = 0; i < size; i++) {
-			s.append("[  ");
+	public static Uniform modelUniform;
 
-			for (int j= 0; j < size; j++) {
-				int rN = r.nextInt(1000000);
-				s.append(rN).append("  ");
-			}
+	public static Uniform viewUniform;
 
-			s.append("]");
+	public static Uniform projectionUniform;
 
-			if (i != size-1) {
-				s.append("\n");
-			}
-		}
-	}
+	public static Renderer renderer;
 
 	public static void main(String[] args) throws IOException {
 		window.init();
 
-		Vertex[] vertices0 = {
-			  new Vertex(0.0f, 0.0f, 0.0f),
-			  new Vertex(-.5f, 0.0f, 0.0f),
-			  new Vertex(0.5f, 0.0f, 0.0f),
-			  new Vertex(0.0f, -.75f, 0.0f),
-			  new Vertex(0.0f, 0.75f, 0.0f),
-		};
+		Texture noTex = new Texture((String) null, 0);
+		noTex.setTexture(1,1, BufferUtils.createIntBuffer(1).put(0xFFFFFFFF).flip());
 
-		ColoredVertex[] vertices1 = {
-			  new ColoredVertex(0.0f, 0.0f, 0.0f, 1f, 1f, 1f),
-			  new ColoredVertex(-.5f, 0.0f, 0.0f, 1f, 1f, 0f),
-			  new ColoredVertex(0.5f, 0.0f, 0.0f, 0f, 1f, 0f),
-			  new ColoredVertex(0.0f, -.75f, 0.0f, 1f, 0f, 0f),
-			  new ColoredVertex(0.0f, 0.75f, 0.0f, 0f, 0f, 1f),
-		};
-
-		TexturedVertex[] texturedTri = {
-			  new TexturedVertex(-0.5f, -0.5f, 0.0f, 1f, 0f, 0f, 0f, 1f),
-			  new TexturedVertex(0.5f, -0.5f, 0.0f, 0f, 1f, 0f, 1f, 1f),
-			  new TexturedVertex(-0.5f, 0.5f, 0.0f, 0f, 0f, 1f, 0f, 0f),
-			  new TexturedVertex(0.5f, 0.5f, 0.0f, 1f, 1f, 0f, 1f, 0f)
-		};
-//		short[] indices = {
-////			  0, 1, 3,   // top left triangle
-////			  0, 2, 3,  // top right triangle
-////			  0, 1, 4,  // bottom left triangle
-////			  0, 2, 4  // bottom right triangle
-//
-//			  0, 1, 2,
-//			  1, 2, 3
-//		};
-
-		Cube[] cubes = new Cube[]{
-			  new Cube( 0.0f,  0.0f,  0.0f),
-			  new Cube( 2.0f,  5.0f, -15.0f),
-			  new Cube(-1.5f, -2.2f, -2.5f),
-			  new Cube(-3.8f, -2.0f, -12.3f),
-			  new Cube( 2.4f, -0.4f, -3.5f),
-			  new Cube(-1.7f,  3.0f, -7.5f),
-			  new Cube( 1.3f, -2.0f, -2.5f),
-			  new Cube( 1.5f,  2.0f, -2.5f),
-			  new Cube( 1.5f,  0.2f, -1.5f),
-			  new Cube(-1.3f,  1.0f, -1.5f)
-		};
-
-//		texturedTri = Cube.getVertices();
-//
-//		short[] indices = Cube.getIndices();
-
-
-		// VBO, EBO, VAO
-//		VBO vbo = new VBO(new Vertex[0], TexturedVertex.SIZE);
-//		EBO ebo = new EBO(vbo);
-//		Arrays.stream(texturedTri).forEach(vbo::addVertex);
-//
-//		VAO basicVao1 = new VAO(() -> {
-//			vbo.bind();
-//			vbo.upload(GL_STATIC_DRAW);
-//
-//			ebo.bind();
-//			ebo.upload(indices, GL_STATIC_DRAW);
-//
-//			glVertexAttribPointer(0, 3, GL_FLOAT, false, TexturedVertex.BYTES, 0);
-//			glVertexAttribPointer(1, 3, GL_FLOAT, false, TexturedVertex.BYTES, 12);
-//			glVertexAttribPointer(2, 2, GL_FLOAT, false, TexturedVertex.BYTES, 24);
-//
-//			glEnableVertexAttribArray(0);
-//			glEnableVertexAttribArray(1);
-//			glEnableVertexAttribArray(2);
-//		});
+		renderer = new Renderer();
 
 		// setup shaders & program
-		Shader basicVertex = Shader.fromFile(GL_VERTEX_SHADER, new File("vertex.vs.glsl"));
-		Shader basicFragment = Shader.fromFile(GL_FRAGMENT_SHADER, new File("frag.fs.glsl"));
+		Shader basicVertex = Shader.fromFile(GL_VERTEX_SHADER,"shaders/vertex.vs.glsl");
+		Shader basicFragment = Shader.fromFile(GL_FRAGMENT_SHADER, "shaders/frag.fs.glsl");
+
+		Shader directVertex = Shader.fromFile(GL_VERTEX_SHADER, "shaders/direct.vs.glsl");
+		Shader directFragment = Shader.fromFile(GL_FRAGMENT_SHADER, "shaders/direct.fs.glsl");
+
+		directProgram = new ShaderProgram(directVertex, directFragment);
+
+		directVertex.delete();
+		directFragment.delete();
 
 		basicProgram = new ShaderProgram(basicVertex, basicFragment);
 
 		basicVertex.delete();
 		basicFragment.delete();
 
-		Texture defaultTex = new Texture(new File("/default.png"), 0);
-		Texture birdTex = new Texture(new File("/bird.png"), 0);
+		Texture defaultTex = new Texture("default.png", 0);
+		Texture birdTex = new Texture("bird.png", 0);
 
 		Uniform texUniform = new Uniform(basicProgram, "tex");
 		Uniform texUniform1 = new Uniform(basicProgram, "tex1");
@@ -169,34 +102,56 @@ public class Main {
 
 				case GLFW_KEY_LEFT_CONTROL -> {
 					if (mouse.enabled) mouse.disableCursor();
-						else mouse.enableCursor();
+					else mouse.enableCursor();
 				}
 
-				case GLFW_KEY_UP -> {
-					basicProgram.use();
-					System.out.println(overlayUnif.getF());
-					overlayUnif.set(overlayUnif.getF() + .02f);
+				// TODO: read from color attachment?
+				case GLFW_KEY_U -> {
+					long now = System.nanoTime();
+					int w = window.mainBuffer.width;
+					int h = window.mainBuffer.height;
+					int[] pixels = new int[w*h];
+
+					//glReadBuffer(GL_BACK);
+					//glReadPixels(0, 0, w, h, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, pixels);
+					glBindTexture(GL_TEXTURE_2D, window.mainBuffer.renderColor);
+					glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, pixels);
+
+					new Thread(() -> {
+						BufferedImage im = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+
+						int i = 0;
+						for (int y = h-1; y >= 0; y--) {
+							for (int x = 0; x < w; x++, i++) {
+								im.setRGB(x, y, pixels[i]);
+							}
+						}
+
+						try {
+							ImageIO.write(im, "png", new File("uwu_test.png"));
+						} catch (IOException e) {
+							throw new RuntimeException(e);
+						}
+
+						System.out.printf("wrote texture to %s!%n", new File("uwu_test.png").getAbsolutePath());
+					}).start();
 				}
 
-				case GLFW_KEY_DOWN -> {
-					basicProgram.use();
-					System.out.println(overlayUnif.getF());
-					overlayUnif.set(overlayUnif.getF() - .02f);
-				}
+//				case GLFW_KEY_UP -> {
+//					System.out.println(overlayUnif.getF());
+//					overlayUnif.set(overlayUnif.getF() + .02f);
+//				}
+//
+//				case GLFW_KEY_DOWN -> {
+//					System.out.println(overlayUnif.getF());
+//					overlayUnif.set(overlayUnif.getF() - .02f);
+//				}
 			}
 		});
 
-		Uniform modelUniform = new Uniform(basicProgram, "model");
-		Uniform viewUniform = new Uniform(basicProgram, "view");
-		Uniform projectionUniform = new Uniform(basicProgram, "projection");
-
-		for (int i = 0; i < cubes.length; i++) {
-			cubes[i].rotation.add(i * 20, 0, 0);
-		}
-
-		Matrix4f projectionMatrix = camera.updateProjectionMatrix(window);
-
-		projectionUniform.set(projectionMatrix, false);
+		modelUniform = new Uniform(basicProgram, "model");
+		viewUniform = new Uniform(basicProgram, "view");
+		projectionUniform = new Uniform(basicProgram, "projection");
 
 		Player player = new Player(ImageIO.read(Main.class.getResourceAsStream("/Skins/gaycat.png")), true);
 		Player player1 = new Player(ImageIO.read(Main.class.getResourceAsStream("/Skins/syl.png")), true);
@@ -209,8 +164,8 @@ public class Main {
 		double delta = 1d/120;
 		double last = glfwGetTime()-delta;
 
-		Plane p1 = new Plane().setSize(2, 2, 2).setPosition(0, 0, 9);
-		Plane p2 = new Plane().setSize(2, 2, 2).setPosition(0, 0, 10);
+		Quad p1 = new Quad().setSize(2, 2, 2).setPosition(0, 0, 9);
+		Quad p2 = new Quad().setSize(2, 2, 2).setPosition(0, 0, 10);
 
 		p1.texture = 1;
 		p2.texture = 2;
@@ -285,32 +240,33 @@ public class Main {
 
 			//camera.updateViewMatrix(viewMatrix);
 
+			//window.mainBuffer.bind();
+
 			// uwu
 			basicProgram.use();
+			//directProgram.use();
 
 			defaultTex.bind();
 			birdTex.bind(1);
 
 			// setup gl rendering state
-
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 			glEnable(GL_DEPTH_TEST);
 			glEnable(GL_CULL_FACE);
 
+			//glViewport(0, 0, window.width*2, window.height*2);
+
 			//basicVao1.bind();
 
-			// update projection matrix (if necessary)
-			if (camera.dirtyMatrix) {
-				camera.dirtyMatrix = false;
-				projectionUniform.set(camera.matrix, false);
-			}
+			// update projection matrix
+			camera.updateProjectionMatrix(window, projectionUniform);
 
 			// Apply camera transforms
 			viewUniform.set(viewMatrix, false);
 
-			// render thing
+			// render thing (This def shouldn't be defined inside the loop)
 			ArrayList<Obj> depthObjects = new ArrayList<>(8);
 
 			for (Player p : new Player[]{player, player1, player2}) {
@@ -344,33 +300,48 @@ public class Main {
 			p2.draw(modelUniform);
 			cx.draw(modelUniform);
 
-//			for (Cube cube : cubes) {
-//				cube.rotation.add((float) Math.toRadians(25f*delta), (float) Math.toRadians(25f*delta), 0);
-//				//cube.position.add(0, (float) (Math.sin(now)*delta), 0);
-//
-//				cube.setupMatrixForRender(modelMatrix.identity());
-//
-//				modelUniform.set(modelMatrix, false);
-//
-//				ebo.draw();
-//			}
+			// !! draw hud or somethiing realistically
+			int width = window.width;
+			int height = window.height;
 
-//			transUniform.set(translationMatrix
-//					    .rotate((float) Math.toRadians(-30f*delta), 0f ,0f, 1f),
-//				  false
-//			);
-//
-//			glDrawElements(GL_TRIANGLES, indices.length, GL_UNSIGNED_SHORT, 0);
-//
-//			float scale = (float) Math.sin(now);
-//			Matrix4f tm2 = new Matrix4f(translationMatrix2);
-//			transUniform.set(tm2
-//					    .scale(scale),
-//				  false
-//			);
-//
-//			glDrawElements(GL_TRIANGLES, indices.length, GL_UNSIGNED_SHORT, 0);
+			//renderer = new Renderer();
 
+			window.mainBuffer.draw(0, true);
+
+			basicProgram.use();
+
+			camera.updateOrthoMatrix(window, projectionUniform);
+
+			viewUniform.set(new Matrix4f().identity(), false);
+			modelUniform.set(new Matrix4f().identity(), false);
+
+			renderer.startRendering();
+
+			glDisable(GL_CULL_FACE);
+			glDisable(GL_DEPTH_TEST);
+
+			//glBindTexture(GL_TEXTURE_2D, bird);
+			//defaultTex.bind();
+			//noTex.bind();
+			glBindTexture(GL_TEXTURE_2D, window.mainBuffer.renderColor);
+
+			{
+				float w = 196f;
+				float h = w/((float) width /height);
+
+				float x = 24f;
+				float y = height-24f-h;
+
+				renderer.pos(x, y, 0).col(1, 1, 1).tex(0, 1).upload();
+				renderer.pos(x, y + h, 0).col(1, 1, 1).tex(0, 0).upload();
+				renderer.pos(x + w, y + h, 0).col(1, 1, 1).tex(1, 0).upload();
+
+				renderer.pos(x, y, 0).col(1, 1, 1).tex(0, 1).upload();
+				renderer.pos(x + w, y, 0).col(1, 1, 1).tex(1, 1).upload();
+				renderer.pos(x + w, y + h, 0).col(1, 1, 1).tex(1, 0).upload();
+			}
+
+			renderer.draw();
 
 			window.glRenderPost();
 		}
